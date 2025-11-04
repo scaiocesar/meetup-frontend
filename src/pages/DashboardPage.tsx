@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { apiService } from '@/services/api';
 import type { Meetup } from '@/types';
 import { Calendar, MapPin, Users, Plus, Search } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

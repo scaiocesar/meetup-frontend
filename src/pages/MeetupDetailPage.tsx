@@ -4,7 +4,7 @@ import { apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Meetup, RSVP } from '@/types';
 import { Calendar, MapPin, Users, Edit, Trash2, ArrowLeft, User } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -164,7 +164,13 @@ export const MeetupDetailPage: React.FC = () => {
 
   const content = (
     <div className="max-w-4xl mx-auto px-6">
-      <Button variant="ghost" onClick={() => navigate(isAuthenticated ? -1 : '/')} className="mb-6">
+      <Button variant="ghost" onClick={() => {
+        if (isAuthenticated) {
+          navigate(-1);
+        } else {
+          navigate('/');
+        }
+      }} className="mb-6">
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back
       </Button>

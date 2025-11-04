@@ -8,7 +8,7 @@ import { Calendar, MapPin, Users, ArrowLeft, Upload, X, Image as ImageIcon } fro
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 
 const meetupSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
