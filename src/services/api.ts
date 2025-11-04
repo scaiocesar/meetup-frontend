@@ -7,7 +7,7 @@ class ApiService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+      baseURL: import.meta.env.VITE_API_URL || 'https://pg21wf8ude.execute-api.us-east-1.amazonaws.com/',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -109,7 +109,7 @@ class ApiService {
     });
     
     // Return full URL with base URL
-    const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    const baseURL = import.meta.env.VITE_API_URL || 'https://pg21wf8ude.execute-api.us-east-1.amazonaws.com/';
     return baseURL + response.data.url;
   }
 }
