@@ -9,7 +9,10 @@ class ApiService {
     // Get API URL from environment variable
     // In development: use .env.local (http://localhost:8080)
     // In production: use .env.production (https://pg21wf8ude.execute-api.us-east-1.amazonaws.com/)
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    
+    // Remove trailing slash to avoid double slashes in URLs
+    apiUrl = apiUrl.replace(/\/$/, '');
     
     this.api = axios.create({
       baseURL: apiUrl,
@@ -125,7 +128,8 @@ class ApiService {
     });
     
     // Return full URL with base URL
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+    apiUrl = apiUrl.replace(/\/$/, ''); // Remove trailing slash
     return apiUrl + response.data.url;
   }
 }
