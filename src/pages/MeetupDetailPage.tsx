@@ -115,9 +115,26 @@ export const MeetupDetailPage: React.FC = () => {
     });
   };
 
-  const isOwner = user?.id === meetup?.createdById;
+  // Check if user is owner or admin
+  // Convert to numbers for comparison to handle any type mismatches
+  const isOwner = user?.id && meetup?.createdById && Number(user.id) === Number(meetup.createdById);
   const isAdmin = user?.role === 'ADMIN';
-  const canEdit = isOwner || isAdmin;
+  const canEdit = (isAuthenticated && (isOwner || isAdmin));
+  
+  // Debug log (remove in production if needed)
+  useEffect(() => {
+    if (meetup && user) {
+      console.log('Meetup Detail Debug:', {
+        userId: user.id,
+        userRole: user.role,
+        meetupCreatedById: meetup.createdById,
+        isOwner,
+        isAdmin,
+        canEdit,
+        isAuthenticated
+      });
+    }
+  }, [meetup, user, isOwner, isAdmin, canEdit, isAuthenticated]);
 
   if (isLoading) {
     return (
@@ -214,7 +231,7 @@ export const MeetupDetailPage: React.FC = () => {
               <p className="text-muted-foreground">Created by {meetup.createdByName}</p>
             </div>
             
-            {canEdit && (
+            {isAuthenticated && canEdit && (
               <div className="flex gap-2">
                 <Link to={`/meetups/${meetup.id}/edit`}>
                   <Button variant="outline" size="sm">
