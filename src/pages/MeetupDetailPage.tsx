@@ -120,21 +120,6 @@ export const MeetupDetailPage: React.FC = () => {
   const isOwner = user?.id && meetup?.createdById && Number(user.id) === Number(meetup.createdById);
   const isAdmin = user?.role === 'ADMIN';
   const canEdit = (isAuthenticated && (isOwner || isAdmin));
-  
-  // Debug log (remove in production if needed)
-  useEffect(() => {
-    if (meetup && user) {
-      console.log('Meetup Detail Debug:', {
-        userId: user.id,
-        userRole: user.role,
-        meetupCreatedById: meetup.createdById,
-        isOwner,
-        isAdmin,
-        canEdit,
-        isAuthenticated
-      });
-    }
-  }, [meetup, user, isOwner, isAdmin, canEdit, isAuthenticated]);
 
   if (isLoading) {
     return (
