@@ -37,8 +37,12 @@ class ApiService {
           window.location.href = '/login';
         }
         
-        const message = error.response?.data?.error || error.message || 'An error occurred';
-        toast.error(message);
+        // Only show toast if not a delete operation (we handle delete errors in component)
+        const isDeleteRequest = error.config?.method === 'delete' && error.config?.url?.includes('/api/meetups/');
+        if (!isDeleteRequest) {
+          const message = error.response?.data?.error || error.message || 'An error occurred';
+          toast.error(message);
+        }
         
         return Promise.reject(error);
       }
@@ -78,7 +82,14 @@ class ApiService {
   }
 
   async deleteMeetup(id: number): Promise<void> {
-    await this.api.delete(`/api/meetups/${id}`);
+    const response = await this.api.delete(`/api/meetups/${id}`, {
+      validateStatus: () => true,
+    });
+    
+    if (response.status >= 400) {
+      const error = response.data?.error || 'Failed to delete meetup';
+      throw new Error(error);
+    }
   }
 
   // RSVP endpoints

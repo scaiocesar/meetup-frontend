@@ -10,9 +10,18 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
+import toast from 'react-hot-toast';
 
 export const MeetupDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -22,6 +31,8 @@ export const MeetupDetailPage: React.FC = () => {
   const [attendees, setAttendees] = useState<RSVP[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRSVPLoading, setIsRSVPLoading] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -72,13 +83,23 @@ export const MeetupDetailPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!meetup) return;
-    if (window.confirm('Are you sure you want to delete this meetup?')) {
-      try {
-        await apiService.deleteMeetup(meetup.id);
+    try {
+      setIsDeleting(true);
+      await apiService.deleteMeetup(meetup.id);
+      toast.success('Meetup deleted successfully');
+      
+      // Navigate based on authentication status
+      if (isAuthenticated) {
+        navigate('/dashboard');
+      } else {
         navigate('/');
-      } catch (error) {
-        console.error('Failed to delete meetup:', error);
       }
+    } catch (error) {
+      console.error('Failed to delete meetup:', error);
+      toast.error('Failed to delete meetup. Please try again.');
+    } finally {
+      setIsDeleting(false);
+      setIsDeleteDialogOpen(false);
     }
   };
 
@@ -201,7 +222,12 @@ export const MeetupDetailPage: React.FC = () => {
                     Edit
                   </Button>
                 </Link>
-                <Button variant="destructive" size="sm" onClick={handleDelete}>
+                <Button 
+                  variant="destructive" 
+                  size="sm" 
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  disabled={isDeleting}
+                >
                   <Trash2 className="h-4 w-4 mr-2" />
                   Delete
                 </Button>
@@ -352,6 +378,34 @@ export const MeetupDetailPage: React.FC = () => {
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Meetup</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{meetup?.title}"? This action cannot be undone and will remove all RSVPs associated with this meetup.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 
