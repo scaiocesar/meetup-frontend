@@ -27,9 +27,6 @@ export const CreateMeetupPage: React.FC = () => {
   const navigate = useNavigate();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [imageData, setImageData] = useState<string | null>(null);
-  const [imageContentType, setImageContentType] = useState<string | null>(null);
 
   const {
     register,
@@ -71,27 +68,7 @@ export const CreateMeetupPage: React.FC = () => {
   const handleRemoveImage = () => {
     setSelectedFile(null);
     setImagePreview(null);
-    setImageData(null);
-    setImageContentType(null);
     setValue('imageUrl', '');
-  };
-
-  const handleUploadImage = async (): Promise<{ imageData: string; contentType: string } | null> => {
-    if (!selectedFile) return null;
-    try {
-      setIsUploading(true);
-      const result = await apiService.uploadImage(selectedFile);
-      setImageData(result.imageData);
-      setImageContentType(result.contentType);
-      setSelectedFile(null);
-      return result;
-    } catch (error) {
-      console.error('Failed to upload image:', error);
-      alert('Failed to upload image. Please try again.');
-      return null;
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   const onSubmit = async (data: MeetupFormValues) => {
@@ -223,7 +200,7 @@ export const CreateMeetupPage: React.FC = () => {
 
             <div>
               <Label htmlFor="image">Image (optional)</Label>
-              {!imagePreview && !imageUrl && !imageData ? (
+              {!imagePreview && !imageUrl ? (
                 <div className="border-2 border-dashed rounded-lg p-6 text-center">
                   <input
                     type="file"
@@ -247,33 +224,18 @@ export const CreateMeetupPage: React.FC = () => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  {selectedFile && !imageData && (
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        onClick={handleUploadImage}
-                        disabled={isUploading}
-                        size="sm"
-                      >
-                        {isUploading ? 'Uploading...' : (
-                          <>
-                            <Upload className="h-4 w-4 mr-2" />
-                            Upload
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Remove
-                      </Button>
-                    </div>
+                  {selectedFile && (
+                    <Button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Remove Image
+                    </Button>
                   )}
-                  {(imageData || imageUrl) && (
+                  {imageUrl && (
                     <Button
                       type="button"
                       onClick={handleRemoveImage}
@@ -292,7 +254,7 @@ export const CreateMeetupPage: React.FC = () => {
               <Button type="button" variant="outline" onClick={() => navigate(-1)} className="flex-1">
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting || isUploading} className="flex-1">
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting ? 'Creating...' : (
                   <>
                     <Upload className="h-4 w-4 mr-2" />
