@@ -4,7 +4,7 @@ import { apiService } from '@/services/api';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Calendar, MapPin, Users, ArrowLeft, Save, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Calendar, MapPin, Users, ArrowLeft, Save, X, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,7 +30,6 @@ export const EditMeetupPage: React.FC = () => {
   const [meetup, setMeetup] = useState<Meetup | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const {
@@ -102,32 +101,25 @@ export const EditMeetupPage: React.FC = () => {
     setValue('imageUrl', '');
   };
 
-  const handleUploadImage = async () => {
-    if (!selectedFile) return;
-    try {
-      setIsUploading(true);
-      const url = await apiService.uploadImage(selectedFile);
-      setValue('imageUrl', url);
-      setSelectedFile(null);
-    } catch (error) {
-      console.error('Failed to upload image:', error);
-      alert('Failed to upload image. Please try again.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
   const onSubmit = async (data: MeetupFormValues) => {
-    if (selectedFile && !data.imageUrl) {
-      await handleUploadImage();
-      if (!data.imageUrl) return;
-    }
-
     try {
+      // Step 1: Update meetup first (without image)
       const updatedMeetup = await apiService.updateMeetup(parseInt(id!), data);
+      
+      // Step 2: If there's a new image file, upload it
+      if (selectedFile) {
+        try {
+          await apiService.uploadMeetupImage(updatedMeetup.id, selectedFile);
+        } catch (imageError: any) {
+          console.error('Failed to upload image, but meetup was updated:', imageError);
+          alert('Meetup updated but image upload failed. You can try again later.');
+        }
+      }
+      
       navigate(`/meetups/${updatedMeetup.id}`);
     } catch (error) {
       console.error('Failed to update meetup:', error);
+      alert('Failed to update meetup. Please try again.');
     }
   };
 
@@ -265,31 +257,16 @@ export const EditMeetupPage: React.FC = () => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  {selectedFile && !imageUrl && (
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        onClick={handleUploadImage}
-                        disabled={isUploading}
-                        size="sm"
-                      >
-                        {isUploading ? 'Uploading...' : (
-                          <>
-                            <Upload className="h-4 w-4 mr-2" />
-                            Upload
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        type="button"
-                        onClick={handleRemoveImage}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <X className="h-4 w-4 mr-2" />
-                        Remove
-                      </Button>
-                    </div>
+                  {selectedFile && (
+                    <Button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      variant="outline"
+                      size="sm"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Remove Image
+                    </Button>
                   )}
                   {imageUrl && (
                     <Button
@@ -315,7 +292,7 @@ export const EditMeetupPage: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button type="submit" disabled={isSubmitting || isUploading} className="flex-1">
+              <Button type="submit" disabled={isSubmitting} className="flex-1">
                 {isSubmitting ? 'Saving...' : (
                   <>
                     <Save className="h-4 w-4 mr-2" />
