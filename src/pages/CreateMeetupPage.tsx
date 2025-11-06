@@ -28,6 +28,8 @@ export const CreateMeetupPage: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [imageData, setImageData] = useState<string | null>(null);
+  const [imageContentType, setImageContentType] = useState<string | null>(null);
 
   const {
     register,
@@ -69,35 +71,65 @@ export const CreateMeetupPage: React.FC = () => {
   const handleRemoveImage = () => {
     setSelectedFile(null);
     setImagePreview(null);
+    setImageData(null);
+    setImageContentType(null);
     setValue('imageUrl', '');
   };
 
-  const handleUploadImage = async () => {
-    if (!selectedFile) return;
+  const handleUploadImage = async (): Promise<{ imageData: string; contentType: string } | null> => {
+    if (!selectedFile) return null;
     try {
       setIsUploading(true);
-      const url = await apiService.uploadImage(selectedFile);
-      setValue('imageUrl', url);
+      const result = await apiService.uploadImage(selectedFile);
+      setImageData(result.imageData);
+      setImageContentType(result.contentType);
       setSelectedFile(null);
+      return result;
     } catch (error) {
       console.error('Failed to upload image:', error);
       alert('Failed to upload image. Please try again.');
+      return null;
     } finally {
       setIsUploading(false);
     }
   };
 
   const onSubmit = async (data: MeetupFormValues) => {
-    if (selectedFile && !data.imageUrl) {
-      await handleUploadImage();
-      if (!data.imageUrl) return;
-    }
-
+    console.log('onSubmit called with data:', data);
+    
     try {
-      const meetup = await apiService.createMeetup(data);
+      // Step 1: Create meetup WITHOUT image first (to avoid large payload)
+      const meetupData: any = {
+        title: data.title,
+        description: data.description,
+        date: data.date,
+        location: data.location,
+        capacity: data.capacity,
+      };
+      
+      console.log('Creating meetup (without image)...');
+      const meetup = await apiService.createMeetup(meetupData);
+      console.log('Meetup created successfully with id:', meetup.id);
+      
+      // Step 2: If there's an image file, upload it and update the meetup
+      if (selectedFile) {
+        console.log('Uploading image for meetup...');
+        try {
+          await apiService.uploadMeetupImage(meetup.id, selectedFile);
+          console.log('Image uploaded successfully');
+        } catch (imageError: any) {
+          console.error('Failed to upload image, but meetup was created:', imageError);
+          // Don't fail the whole operation if image upload fails
+          alert('Meetup created but image upload failed. You can add the image later by editing.');
+        }
+      }
+      
       navigate(`/meetups/${meetup.id}`);
-    } catch (error) {
-      console.error('Failed to create meetup:', error);
+    } catch (error: any) {
+      console.error('Failed to create meetup - Full error:', error);
+      console.error('Error response:', error.response);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to create meetup';
+      alert(`Error: ${errorMessage}`);
     }
   };
 
@@ -191,7 +223,7 @@ export const CreateMeetupPage: React.FC = () => {
 
             <div>
               <Label htmlFor="image">Image (optional)</Label>
-              {!imagePreview && !imageUrl ? (
+              {!imagePreview && !imageUrl && !imageData ? (
                 <div className="border-2 border-dashed rounded-lg p-6 text-center">
                   <input
                     type="file"
@@ -215,7 +247,7 @@ export const CreateMeetupPage: React.FC = () => {
                       className="w-full h-full object-cover"
                     />
                   </div>
-                  {selectedFile && !imageUrl && (
+                  {selectedFile && !imageData && (
                     <div className="flex gap-2">
                       <Button
                         type="button"
@@ -241,7 +273,7 @@ export const CreateMeetupPage: React.FC = () => {
                       </Button>
                     </div>
                   )}
-                  {imageUrl && (
+                  {(imageData || imageUrl) && (
                     <Button
                       type="button"
                       onClick={handleRemoveImage}

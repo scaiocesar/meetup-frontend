@@ -140,14 +140,18 @@ export const PublicEventsPage: React.FC = () => {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredMeetups.map((meetup) => (
-                <Link key={meetup.id} to={`/meetups/${meetup.id}`}>
+                  <Link key={meetup.id} to={`/meetups/${meetup.id}`}>
                   <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                     {meetup.imageUrl && (
                       <div className="w-full h-48 overflow-hidden rounded-t-lg">
                         <img
-                          src={meetup.imageUrl}
+                          src={apiService.getImageUrl(meetup.imageUrl) || ''}
                           alt={meetup.title}
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            // Hide image if it fails to load
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
                         />
                       </div>
                     )}

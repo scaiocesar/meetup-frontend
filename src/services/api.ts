@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 
 class ApiService {
   private api: AxiosInstance;
+  private baseURL: string;
 
   constructor() {
     // Get API URL from environment variable
@@ -13,6 +14,7 @@ class ApiService {
     
     // Remove trailing slash to avoid double slashes in URLs
     apiUrl = apiUrl.replace(/\/$/, '');
+    this.baseURL = apiUrl;
     
     this.api = axios.create({
       baseURL: apiUrl,
@@ -116,21 +118,45 @@ class ApiService {
     return response.data;
   }
 
-  // Image upload endpoint
-  async uploadImage(file: File): Promise<string> {
+  // Image upload endpoint - returns image data and content type (for preview)
+  async uploadImage(file: File): Promise<{ imageData: string; contentType: string }> {
     const formData = new FormData();
     formData.append('file', file);
     
-    const response: AxiosResponse<{ url: string }> = await this.api.post('/api/images/upload', formData, {
+    const response: AxiosResponse<{ imageData: string; contentType: string }> = await this.api.post('/api/images/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
     });
     
-    // Return full URL with base URL
-    let apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080';
-    apiUrl = apiUrl.replace(/\/$/, ''); // Remove trailing slash
-    return apiUrl + response.data.url;
+    return response.data;
+  }
+
+  // Upload image for a specific meetup
+  async uploadMeetupImage(meetupId: number, file: File): Promise<void> {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    await this.api.put(`/api/images/meetup/${meetupId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
+
+  // Helper method to get full image URL
+  getImageUrl(imageUrl: string | null | undefined): string | null {
+    if (!imageUrl) return null;
+    // If imageUrl is already a full URL, return it
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    // If imageUrl is a relative path starting with /api/images/, construct full URL
+    if (imageUrl.startsWith('/api/images/')) {
+      return `${this.baseURL}${imageUrl}`;
+    }
+    // Otherwise return as-is (might be an old URL format)
+    return imageUrl;
   }
 }
 

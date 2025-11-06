@@ -203,9 +203,12 @@ export const MeetupDetailPage: React.FC = () => {
           {meetup.imageUrl && (
             <div className="aspect-video rounded-lg overflow-hidden">
               <img
-                src={meetup.imageUrl}
+                src={apiService.getImageUrl(meetup.imageUrl) || ''}
                 alt={meetup.title}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
               />
             </div>
           )}
